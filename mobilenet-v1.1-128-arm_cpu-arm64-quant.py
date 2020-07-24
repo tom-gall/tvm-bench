@@ -101,7 +101,7 @@ module.set_input(**params)
 
 ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
 prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
-print("%-20s %-19s (%s)" % (model_name, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
+print("arm_cpu %-20s %-19s (%s)" % (model_name, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
 
 # Run
 #module.set_input(input_tensor, tvm.nd.array(image_data))
