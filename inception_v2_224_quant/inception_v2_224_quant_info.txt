@@ -1,0 +1,5 @@
+Model: inception_v2_224_quant
+Input: input
+Output: InceptionV2/Predictions/Reshape_1
+Top-1 accuracy: 73.72%
+Top-5 accuracy: 91.79%
