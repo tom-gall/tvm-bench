@@ -1,0 +1,4 @@
+Model: inception_v3
+Input: input
+Output: output
+Top-1 Accuracy 77.5%
