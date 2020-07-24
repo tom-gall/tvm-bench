@@ -46,8 +46,7 @@ model_url = "http://download.tensorflow.org/models/mobilenet_v1_2018_08_02/mobil
 #model_path = download_testdata(model_url, "mobilenet_v1_1.0_224.tgz", module=['tf', 'official'])
 #model_dir = os.path.dirname(model_path)
 #extract(model_path)
-model_dir="./mobilenet_v2_1.0_224"
-
+model_dir ="./mobilenet_v2_1.0_224"
 # Now we can open mobilenet_v1_1.0_224.tflite
 tflite_model_file = os.path.join(model_dir, "mobilenet_v2_1.0_224.tflite")
 tflite_model_buf = open(tflite_model_file, "rb").read()
@@ -71,12 +70,11 @@ mod, params = relay.frontend.from_tflite(tflite_model,
                                          shape_dict={input_tensor: input_shape},
                                          dtype_dict={input_tensor: input_dtype})
 
-# Build the module against to x86 CPU
-t = tvm.target.arm_cpu(options=" -mtriple=aarch64-linux-gnu -mattr=+neon")
-target = "llvm -mattr=+neon"
+# Build the module against ARM
+target = tvm.target.arm_cpu(options=" -mtriple=aarch64-linux-gnu -mattr=+neon")
 ctx = tvm.context(str(target), 0)
 with relay.build_config(opt_level=3):
-    graph, lib, params = relay.build(mod, t, params=params)
+    graph, lib, params = relay.build(mod, target, params=params)
 
 # Create a runtime executor module
 module = graph_runtime.create(graph, lib, tvm.cpu())
@@ -89,7 +87,7 @@ module.set_input(**params)
 
 ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
 prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
-print("arm_cpu %-20s %-19s (%s)" % ("mobilenetv2-1.0-224", "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
+print("arm_cpu %-20s %-19s (%s)" % ("mobilenet_v2_1.0_224_float", "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
 
 # Run
 #module.run()
