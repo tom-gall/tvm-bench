@@ -40,9 +40,9 @@ model_url = "http://download.tensorflow.org/models/mobilenet_v1_2018_08_02/mobil
 # Download model tar file and extract it to get mobilenet_v1_1.0_224.tflite
 #model_path = download_testdata(model_url, "mobilenet_v1_1.0_224.tgz", module=['tf', 'official'])
 #model_dir = os.path.dirname(model_path)
-model_dir = './mobilenet-v1.1.0-128quant/'
+model_dir = './mobilenet_v1_1.0_224_quant/'
 #extract(model_path)
-model_name ='mobilenet_v1_1.0_128_quant.tflite'
+model_name ='mobilenet_v1_1.0_224_quant.tflite'
 # Now we can open mobilenet_v1_1.0_224.tflite
 #tflite_model_file = os.path.join(model_dir, "mobilenet_v1_1.0_224.tflite")
 tflite_model_file = os.path.join(model_dir, model_name)
