@@ -92,35 +92,35 @@ module.set_input(input_tensor, tvm.nd.array(image_data))
 # Feed related params
 module.set_input(**params)
 
-#ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
-#prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
-#print("%-20s %-19s (%s)" % (model_name, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
+ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
+prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
+print("%-20s %-19s (%s)" % (model_name, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
 
 # Run
-module.run()
+#module.run()
 
 # Get output
-tvm_output = module.get_output(0).asnumpy()
+#tvm_output = module.get_output(0).asnumpy()
 
 # Load label file
-label_file_url = ''.join(['https://raw.githubusercontent.com/',
-                          'tensorflow/tensorflow/master/tensorflow/lite/java/demo/',
-                          'app/src/main/assets/',
-                          'labels_mobilenet_quant_v1_224.txt'])
-label_file = "labels_mobilenet_quant_v1_224.txt"
-label_path = download_testdata(label_file_url, label_file, module='data')
+#label_file_url = ''.join(['https://raw.githubusercontent.com/',
+#                          'tensorflow/tensorflow/master/tensorflow/lite/java/demo/',
+#                          'app/src/main/assets/',
+#                          'labels_mobilenet_quant_v1_224.txt'])
+#label_file = "labels_mobilenet_quant_v1_224.txt"
+#label_path = download_testdata(label_file_url, label_file, module='data')
 
 # List of 1001 classes
-with open(label_path) as f:
-    labels = f.readlines()
+#with open(label_path) as f:
+#    labels = f.readlines()
 
 # Convert result to 1D data
-predictions = np.squeeze(tvm_output)
+#predictions = np.squeeze(tvm_output)
 
-top_k = predictions.argsort()[-5:][::-1]
-for node_id in top_k:
+#top_k = predictions.argsort()[-5:][::-1]
+#for node_id in top_k:
     #human_string = lsnode_lookup.id_to_string(node_id)
-    print(labels[node_id])
+    #print(labels[node_id])
 
 
 
