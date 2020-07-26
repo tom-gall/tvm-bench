@@ -11,21 +11,12 @@ from tvm.relay import testing
 from tvm.relay import vm
 from tvm.contrib.download import download_testdata
 
-def extract(path):
-    import tarfile
-    if path.endswith("tgz") or path.endswith("gz"):
-        dir_path = os.path.dirname(path)
-        tar = tarfile.open(path)
-        tar.extractall(path=dir_path)
-        tar.close()
-    else:
-        raise RuntimeError('Could not decompress the file: ' + path)
-
 def load_test_image(dtype='float32'):
     image_url = 'https://github.com/dmlc/mxnet.js/blob/master/data/cat.png?raw=true'
     image_path = download_testdata(image_url, 'cat.png', module='data')
-    resized_image = Image.open(image_path).resize((224, 224))
+    resized_image = Image.open(image_path).resize((299, 299))
 
+    #image_data = np.asarray(resized_image).astype("float32")
     image_data = np.asarray(resized_image).astype("float32")
 
     # Add a dimension to the image so that we have NHWC format layout
@@ -40,15 +31,9 @@ def load_test_image(dtype='float32'):
     return image_data
 
 
-model_url = "http://download.tensorflow.org/models/mobilenet_v1_2018_08_02/mobilenet_v1_1.0_224.tgz"
-
-# Download model tar file and extract it to get mobilenet_v1_1.0_224.tflite
-model_path = download_testdata(model_url, "mobilenet_v1_1.0_224.tgz", module=['tf', 'official'])
-model_dir = os.path.dirname(model_path)
-extract(model_path)
-
-# Now we can open mobilenet_v1_1.0_224.tflite
-tflite_model_file = os.path.join(model_dir, "mobilenet_v1_1.0_224.tflite")
+model_dir = './/'
+model_name ='inception_v3.tflite'
+tflite_model_file = os.path.join(model_dir, model_name)
 tflite_model_buf = open(tflite_model_file, "rb").read()
 
 # Get TFLite model from buffer
@@ -62,7 +47,7 @@ except AttributeError:
 image_data = load_test_image()
 
 input_tensor = "input"
-input_shape = (1, 224, 224, 3)
+input_shape = (1, 299, 299, 3)
 input_dtype = "float32"
 
 # Parse TFLite model and convert it to a Relay module
@@ -72,6 +57,7 @@ mod, params = relay.frontend.from_tflite(tflite_model,
 
 # Build the module against to x86 CPU
 target = "llvm -mattr=+neon"
+
 ctx = tvm.context(str(target), 0)
 with relay.build_config(opt_level=3):
     graph, lib, params = relay.build(mod, target, params=params)
@@ -85,33 +71,47 @@ module.set_input(input_tensor, tvm.nd.array(image_data))
 # Feed related params
 module.set_input(**params)
 
-#ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
-#prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
-#print("%-20s %-19s (%s)" % ("mobilenetv1-1.0-224", "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
+ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
+prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
+print("llvm %-20s %-19s (%s)" % (model_name, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
 
 # Run
-module.run()
+#module.run()
 
 # Get output
-tvm_output = module.get_output(0).asnumpy()
+#tvm_output = module.get_output(0).asnumpy()
 
 # Load label file
-label_file_url = ''.join(['https://raw.githubusercontent.com/',
-                          'tensorflow/tensorflow/master/tensorflow/lite/java/demo/',
-                          'app/src/main/assets/',
-                          'labels_mobilenet_quant_v1_224.txt'])
-label_file = "labels_mobilenet_quant_v1_224.txt"
-label_path = download_testdata(label_file_url, label_file, module='data')
+#label_file_url = ''.join(['https://raw.githubusercontent.com/',
+#                          'tensorflow/tensorflow/master/tensorflow/lite/java/demo/',
+#                          'app/src/main/assets/',
+#                          'labels_mobilenet_quant_v1_224.txt'])
+#label_file = "labels_mobilenet_quant_v1_224.txt"
+#label_path = download_testdata(label_file_url, label_file, module='data')
 
 # List of 1001 classes
-with open(label_path) as f:
-    labels = f.readlines()
+#with open(label_path) as f:
+#    labels = f.readlines()
 
 # Convert result to 1D data
-predictions = np.squeeze(tvm_output)
+#predictions = np.squeeze(tvm_output)
+
+#top_k = predictions.argsort()[-5:][::-1]
+#for node_id in top_k:
+    #human_string = lsnode_lookup.id_to_string(node_id)
+    #print(labels[node_id])
+
+
+
+# List of 1001 classes
+#with open(label_path) as f:
+#    labels = f.readlines()
+
+# Convert result to 1D data
+#predictions = np.squeeze(tvm_output)
 
 # Get top 1 prediction
-prediction = np.argmax(predictions)
+#prediction = np.argmax(predictions)
 
 # Convert id to class name and show the result
-print("The image prediction result is: id " + str(prediction) + " name: " + labels[prediction])
+#print("The image prediction result is: id " + str(prediction) + " name: " + labels[prediction])
