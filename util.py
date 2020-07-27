@@ -16,9 +16,43 @@
 # under the License.
 """Utility for benchmark"""
 
+import numpy as np
 import sys
 from tvm import relay
 from tvm.relay import testing
+from tvm.contrib.download import download_testdata
+from PIL import Image
+
+def extract(path):
+    import tarfile
+    if path.endswith("tgz") or path.endswith("gz"):
+        dir_path = os.path.dirname(path)
+        tar = tarfile.open(path)
+        tar.extractall(path=dir_path)
+        tar.close()
+    else:
+        raise RuntimeError('Could not decompress the file: ' + path)
+
+def load_test_image(dtype='float32', quant_bool=False, width=224, height=224):
+    image_url = 'https://github.com/dmlc/mxnet.js/blob/master/data/cat.png?raw=true'
+    image_path = download_testdata(image_url, 'cat.png', module='data')
+    resized_image = Image.open(image_path).resize((width, height))
+
+    #image_data = np.asarray(resized_image).astype("float32")
+    image_data = np.asarray(resized_image).astype(dtype)
+
+    # Add a dimension to the image so that we have NHWC format layout
+    image_data = np.expand_dims(image_data, axis=0)
+
+    if (quant_bool==False):
+    	# Preprocess image as described here:
+    	# https://github.com/tensorflow/models/blob/edb6ed22a801665946c63d650ab9a0b23d98e1b1/research/slim/preprocessing/inception_preprocessing.py#L243
+    	image_data[:, :, :, 0] = 2.0 / 255.0 * image_data[:, :, :, 0] - 1
+    	image_data[:, :, :, 1] = 2.0 / 255.0 * image_data[:, :, :, 1] - 1
+    	image_data[:, :, :, 2] = 2.0 / 255.0 * image_data[:, :, :, 2] - 1    	
+    print('input', image_data.shape)
+    return image_data
+
 
 def get_network(name, batch_size, dtype='float32'):
     """Get the symbol definition and random weight of a network
