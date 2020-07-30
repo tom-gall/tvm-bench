@@ -31,7 +31,7 @@ def load_test_image(dtype='float32'):
     return image_data
 
 
-model_dir = './/'
+model_dir = './inception_v3_2018_04_27/'
 model_name ='inception_v3.tflite'
 tflite_model_file = os.path.join(model_dir, model_name)
 tflite_model_buf = open(tflite_model_file, "rb").read()
@@ -58,7 +58,7 @@ mod, params = relay.frontend.from_tflite(tflite_model,
 # Build the module against to x86 CPU
 target = "llvm -mattr=+neon"
 
-ctx = tvm.context(str(target), 0)
+ctx = tvm.context("cpu", 0)
 with relay.build_config(opt_level=3):
     graph, lib, params = relay.build(mod, target, params=params)
 
