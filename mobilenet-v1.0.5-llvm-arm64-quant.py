@@ -60,17 +60,20 @@ mod, params = relay.frontend.from_tflite(tflite_model,
 #    mod = seq(mod)
 
 # Build the module against to x86 CPU
-target = "llvm -mattr=+neon"
-#target = "arm_cpu -mtriple=armv7a-linux-gnueabihf -mattr=+neon,+vfp4,+thumb2"
-
-t = tvm.target.arm_cpu(options="-device=arm_cpu -mtriple=armv7a-linux-gnueabihf -mattr=+neon,+vfp4,+thumb2")
+target = "llvm -mtriple=aarch64-linux-gnu -mattr=+neon"
+tvm_targets = tvm.target.create(target)
+cpu_target = "llvm"
+target_host=cpu_target
 
 cpudevice = tvm.runtime.cpu()
-#ctx = tvm.context(str(target), 0)
 ctx = tvm.runtime.context("cpu")
 
-with relay.build_config(opt_level=3):
-    graph, lib, params = relay.build(mod, target, params=params)
+with tvm.transform.PassContext(opt_level=3):
+    graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+
+lib = graph_mod.get_lib()
+params = graph_mod.get_params()
+graph = graph_mod.get_json()
 
 # Create a runtime executor module
 module = graph_runtime.create(graph, lib, cpudevice)
