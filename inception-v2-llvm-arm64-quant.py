@@ -10,21 +10,7 @@ from tvm.runtime import vm as vm_rt
 from tvm.relay import testing
 from tvm.relay import vm
 from tvm.contrib.download import download_testdata
-
-def load_test_image(dtype='float32'):
-    image_url = 'https://github.com/dmlc/mxnet.js/blob/master/data/cat.png?raw=true'
-    image_path = download_testdata(image_url, 'cat.png', module='data')
-    resized_image = Image.open(image_path).resize((224, 224))
-
-    #image_data = np.asarray(resized_image).astype("float32")
-    image_data = np.asarray(resized_image).astype("uint8")
-
-    # Add a dimension to the image so that we have NHWC format layout
-    image_data = np.expand_dims(image_data, axis=0)
-
-    print('input', image_data.shape)
-    return image_data
-
+from util import load_test_image
 
 model_dir = './inception_v2_224_quant/'
 model_name ='inception_v2_224_quant.tflite'
@@ -39,7 +25,8 @@ except AttributeError:
     import tflite.Model
     tflite_model = tflite.Model.Model.GetRootAsModel(tflite_model_buf, 0)
 
-image_data = load_test_image()
+dtype="uint8"
+image_data = load_test_image(dtype)
 
 input_tensor = "input"
 input_shape = (1, 224, 224, 3)
