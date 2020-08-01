@@ -75,7 +75,7 @@ mod, params = relay.frontend.from_tflite(tflite_model,
 #    mod = seq(mod)
 
 # Build the module against to x86 CPU
-target = "llvm -mattr=+neon,+vfp4,+thumb2"
+target = "llvm -mattr=+neon,+vfp4,+thumb2 -mcpu=cortex-a7"
 #target = "arm_cpu -mtriple=armv7a-linux-gnueabihf -mattr=+neon,+vfp4,+thumb2"
 
 cpudevice = tvm.runtime.cpu()

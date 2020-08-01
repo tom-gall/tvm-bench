@@ -10,47 +10,10 @@ from tvm.runtime import vm as vm_rt
 from tvm.relay import testing
 from tvm.relay import vm
 from tvm.contrib.download import download_testdata
+from util import load_test_image
 
-def extract(path):
-    import tarfile
-    if path.endswith("tgz") or path.endswith("gz"):
-        dir_path = os.path.dirname(path)
-        tar = tarfile.open(path)
-        tar.extractall(path=dir_path)
-        tar.close()
-    else:
-        raise RuntimeError('Could not decompress the file: ' + path)
-
-def load_test_image(dtype='float32'):
-    image_url = 'https://github.com/dmlc/mxnet.js/blob/master/data/cat.png?raw=true'
-    image_path = download_testdata(image_url, 'cat.png', module='data')
-    resized_image = Image.open(image_path).resize((128, 128))
-
-    #image_data = np.asarray(resized_image).astype("float32")
-    image_data = np.asarray(resized_image).astype("int8")
-
-    # Add a dimension to the image so that we have NHWC format layout
-    image_data = np.expand_dims(image_data, axis=0)
-
-    # Preprocess image as described here:
-    # https://github.com/tensorflow/models/blob/edb6ed22a801665946c63d650ab9a0b23d98e1b1/research/slim/preprocessing/inception_preprocessing.py#L243
-    #image_data[:, :, :, 0] = 2.0 / 255.0 * image_data[:, :, :, 0] - 1
-    #image_data[:, :, :, 1] = 2.0 / 255.0 * image_data[:, :, :, 1] - 1
-    #image_data[:, :, :, 2] = 2.0 / 255.0 * image_data[:, :, :, 2] - 1
-    print('input', image_data.shape)
-    return image_data
-
-
-model_url = "http://download.tensorflow.org/models/mobilenet_v1_2018_08_02/mobilenet_v1_1.0_224.tgz"
-
-# Download model tar file and extract it to get mobilenet_v1_1.0_224.tflite
-#model_path = download_testdata(model_url, "mobilenet_v1_1.0_224.tgz", module=['tf', 'official'])
-#model_dir = os.path.dirname(model_path)
 model_dir = './mobilenet-v1.1.0-128quant/'
-#extract(model_path)
 model_name ='mobilenet_v1_1.0_128_quant.tflite'
-# Now we can open mobilenet_v1_1.0_224.tflite
-#tflite_model_file = os.path.join(model_dir, "mobilenet_v1_1.0_224.tflite")
 tflite_model_file = os.path.join(model_dir, model_name)
 tflite_model_buf = open(tflite_model_file, "rb").read()
 
@@ -62,12 +25,15 @@ except AttributeError:
     import tflite.Model
     tflite_model = tflite.Model.Model.GetRootAsModel(tflite_model_buf, 0)
 
-image_data = load_test_image()
+dtype="uint8"
+quant_bool=False
+width=128
+height=128
+image_data = load_test_image(dtype, quant_bool, width, height)
 
 input_tensor = "input"
 input_shape = (1, 128, 128, 3)
-#input_dtype = "float32"
-input_dtype = "int8"
+input_dtype = "uint8"
 
 # Parse TFLite model and convert it to a Relay module
 mod, params = relay.frontend.from_tflite(tflite_model,
@@ -76,12 +42,19 @@ mod, params = relay.frontend.from_tflite(tflite_model,
 
 # Build the module against to x86 CPU
 target = "llvm -mattr=+neon,+vfp4,+thumb2"
+tvm_targets = tvm.target.create(target)
+cpu_target = "llvm"
+target_host=cpu_target
 
-t = tvm.target.arm_cpu(options="-mattr=+neon,+vfp4,+thumb2")
+cpudevice = tvm.runtime.cpu()
+ctx = tvm.runtime.context("cpu")
 
-ctx = tvm.context(str(target), 0)
-with relay.build_config(opt_level=3):
-    graph, lib, params = relay.build(mod, target, params=params)
+with tvm.transform.PassContext(opt_level=3):
+    graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+
+lib = graph_mod.get_lib()
+params = graph_mod.get_params()
+graph = graph_mod.get_json()
 
 # Create a runtime executor module
 module = graph_runtime.create(graph, lib, tvm.cpu())

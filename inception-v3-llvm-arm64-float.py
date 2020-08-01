@@ -10,26 +10,7 @@ from tvm.runtime import vm as vm_rt
 from tvm.relay import testing
 from tvm.relay import vm
 from tvm.contrib.download import download_testdata
-
-def load_test_image(dtype='float32'):
-    image_url = 'https://github.com/dmlc/mxnet.js/blob/master/data/cat.png?raw=true'
-    image_path = download_testdata(image_url, 'cat.png', module='data')
-    resized_image = Image.open(image_path).resize((299, 299))
-
-    #image_data = np.asarray(resized_image).astype("float32")
-    image_data = np.asarray(resized_image).astype("float32")
-
-    # Add a dimension to the image so that we have NHWC format layout
-    image_data = np.expand_dims(image_data, axis=0)
-
-    # Preprocess image as described here:
-    # https://github.com/tensorflow/models/blob/edb6ed22a801665946c63d650ab9a0b23d98e1b1/research/slim/preprocessing/inception_preprocessing.py#L243
-    image_data[:, :, :, 0] = 2.0 / 255.0 * image_data[:, :, :, 0] - 1
-    image_data[:, :, :, 1] = 2.0 / 255.0 * image_data[:, :, :, 1] - 1
-    image_data[:, :, :, 2] = 2.0 / 255.0 * image_data[:, :, :, 2] - 1
-    print('input', image_data.shape)
-    return image_data
-
+from util import load_test_image
 
 model_dir = './/'
 model_name ='inception_v3.tflite'
@@ -44,7 +25,11 @@ except AttributeError:
     import tflite.Model
     tflite_model = tflite.Model.Model.GetRootAsModel(tflite_model_buf, 0)
 
-image_data = load_test_image()
+dtype="float32"
+quant_bool=True
+width=299
+height=299
+image_data = load_test_image(dtype, quant_bool, width, height)
 
 input_tensor = "input"
 input_shape = (1, 299, 299, 3)
