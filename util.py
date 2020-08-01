@@ -33,7 +33,7 @@ def extract(path):
     else:
         raise RuntimeError('Could not decompress the file: ' + path)
 
-def load_test_image(dtype='float32', quant_bool=False, width=224, height=224):
+def load_test_image(dtype='float32', width=224, height=224):
     image_url = 'https://github.com/dmlc/mxnet.js/blob/master/data/cat.png?raw=true'
     image_path = download_testdata(image_url, 'cat.png', module='data')
     resized_image = Image.open(image_path).resize((width, height))
@@ -44,7 +44,7 @@ def load_test_image(dtype='float32', quant_bool=False, width=224, height=224):
     # Add a dimension to the image so that we have NHWC format layout
     image_data = np.expand_dims(image_data, axis=0)
 
-    if (quant_bool==False):
+    if (dtype=='float32'):
     	# Preprocess image as described here:
     	# https://github.com/tensorflow/models/blob/edb6ed22a801665946c63d650ab9a0b23d98e1b1/research/slim/preprocessing/inception_preprocessing.py#L243
     	image_data[:, :, :, 0] = 2.0 / 255.0 * image_data[:, :, :, 0] - 1
