@@ -26,10 +26,9 @@ except AttributeError:
     tflite_model = tflite.Model.Model.GetRootAsModel(tflite_model_buf, 0)
 
 dtype="float32"
-quant_bool=True
 width=299
 height=299
-image_data = load_test_image(dtype, quant_bool, width, height)
+image_data = load_test_image(dtype, width, height)
 
 input_tensor = "input"
 input_shape = (1, 299, 299, 3)
