@@ -12,16 +12,8 @@ from tvm.relay import vm
 from tvm.contrib.download import download_testdata
 from util import load_test_image
 
-model_url = "http://download.tensorflow.org/models/mobilenet_v1_2018_08_02/mobilenet_v1_1.0_224.tgz"
-
-# Download model tar file and extract it to get mobilenet_v1_1.0_224.tflite
-#model_path = download_testdata(model_url, "mobilenet_v1_1.0_224.tgz", module=['tf', 'official'])
-#model_dir = os.path.dirname(model_path)
 model_dir = './mobilenet-v1.1.0-128quant/'
-#extract(model_path)
 model_name ='mobilenet_v1_1.0_128_quant.tflite'
-# Now we can open mobilenet_v1_1.0_224.tflite
-#tflite_model_file = os.path.join(model_dir, "mobilenet_v1_1.0_224.tflite")
 tflite_model_file = os.path.join(model_dir, model_name)
 tflite_model_buf = open(tflite_model_file, "rb").read()
 
@@ -33,16 +25,14 @@ except AttributeError:
     import tflite.Model
     tflite_model = tflite.Model.Model.GetRootAsModel(tflite_model_buf, 0)
 
-dtype="int8"
-quant_bool=False
+dtype="uint8"
 width=128
 height=128
-image_data = load_test_image(dtype, quant_bool, width, height)
+image_data = load_test_image(dtype, width, height)
 
 input_tensor = "input"
 input_shape = (1, 128, 128, 3)
-#input_dtype = "float32"
-input_dtype = "int8"
+input_dtype = "uint8"
 
 # Parse TFLite model and convert it to a Relay module
 mod, params = relay.frontend.from_tflite(tflite_model,
@@ -51,12 +41,19 @@ mod, params = relay.frontend.from_tflite(tflite_model,
 
 # Build the module against to x86 CPU
 target = "llvm -mattr=+neon,+vfp4,+thumb2"
+tvm_targets = tvm.target.create(target)
+cpu_target = "llvm"
+target_host=cpu_target
 
-t = tvm.target.arm_cpu(options="-mattr=+neon,+vfp4,+thumb2")
+cpudevice = tvm.runtime.cpu()
+ctx = tvm.runtime.context("cpu")
 
-ctx = tvm.context(str(target), 0)
-with relay.build_config(opt_level=3):
-    graph, lib, params = relay.build(mod, target, params=params)
+with tvm.transform.PassContext(opt_level=3):
+    graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+
+lib = graph_mod.get_lib()
+params = graph_mod.get_params()
+graph = graph_mod.get_json()
 
 # Create a runtime executor module
 module = graph_runtime.create(graph, lib, tvm.cpu())
