@@ -35,11 +35,10 @@ except AttributeError:
     
 
 dtype="float32"
-quant_bool=True
 width=128
 height=128
 
-image_data = load_test_image(dtype, quant_bool, width, height)
+image_data = load_test_image(dtype, width, height)
 
 input_tensor = "input"
 input_shape = (1, 128, 128, 3)

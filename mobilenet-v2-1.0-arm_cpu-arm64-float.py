@@ -32,8 +32,7 @@ except AttributeError:
     tflite_model = tflite.Model.Model.GetRootAsModel(tflite_model_buf, 0)
 
 dtype="float32"
-quant_bool=True
-image_data = load_test_image(dtype, quant_bool)
+image_data = load_test_image(dtype)
 
 input_tensor = "input"
 input_shape = (1, 224, 224, 3)
@@ -45,10 +44,20 @@ mod, params = relay.frontend.from_tflite(tflite_model,
                                          dtype_dict={input_tensor: input_dtype})
 
 # Build the module against ARM
-target = tvm.target.arm_cpu(options=" -mtriple=aarch64-linux-gnu -mattr=+neon")
-ctx = tvm.context(str(target), 0)
-with relay.build_config(opt_level=3):
-    graph, lib, params = relay.build(mod, target, params=params)
+target = "llvm -device=arm_cpu -mtriple=aarch64-unknown-linux-gnu -mattr=+neon"
+tvm_targets = tvm.target.create(target)
+cpu_target = "llvm"
+target_host=cpu_target
+
+cpudevice = tvm.runtime.cpu()
+ctx = tvm.runtime.context("cpu")
+
+with tvm.transform.PassContext(opt_level=3):
+    graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+
+lib = graph_mod.get_lib()
+params = graph_mod.get_params()
+graph = graph_mod.get_json()
 
 # Create a runtime executor module
 module = graph_runtime.create(graph, lib, tvm.cpu())

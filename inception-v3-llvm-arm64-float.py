@@ -12,7 +12,7 @@ from tvm.relay import vm
 from tvm.contrib.download import download_testdata
 from util import load_test_image
 
-model_dir = './/'
+model_dir = './inception_v3_2018_04_27/'
 model_name ='inception_v3.tflite'
 tflite_model_file = os.path.join(model_dir, model_name)
 tflite_model_buf = open(tflite_model_file, "rb").read()
@@ -26,10 +26,9 @@ except AttributeError:
     tflite_model = tflite.Model.Model.GetRootAsModel(tflite_model_buf, 0)
 
 dtype="float32"
-quant_bool=True
 width=299
 height=299
-image_data = load_test_image(dtype, quant_bool, width, height)
+image_data = load_test_image(dtype, width, height)
 
 input_tensor = "input"
 input_shape = (1, 299, 299, 3)
@@ -41,11 +40,20 @@ mod, params = relay.frontend.from_tflite(tflite_model,
                                          dtype_dict={input_tensor: input_dtype})
 
 # Build the module against to x86 CPU
-target = "llvm -mattr=+neon"
+target = "llvm -mtriple=aarch64-unknown-linux-gnu -mattr=+neon"
+tvm_targets = tvm.target.create(target)
+cpu_target = "llvm"
+target_host=cpu_target
 
-ctx = tvm.context(str(target), 0)
-with relay.build_config(opt_level=3):
-    graph, lib, params = relay.build(mod, target, params=params)
+cpudevice = tvm.runtime.cpu()
+ctx = tvm.runtime.context("cpu")
+
+with tvm.transform.PassContext(opt_level=3):
+    graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+
+lib = graph_mod.get_lib()
+params = graph_mod.get_params()
+graph = graph_mod.get_json()
 
 # Create a runtime executor module
 module = graph_runtime.create(graph, lib, tvm.cpu())
