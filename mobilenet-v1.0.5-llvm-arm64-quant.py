@@ -50,8 +50,8 @@ mod, params = relay.frontend.from_tflite(tflite_model,
 #with tvm.transform.PassContext(opt_level=3):
 #    mod = seq(mod)
 
-# Build the module against to x86 CPU
-target = "llvm -mtriple=aarch64-linux-gnu -mattr=+neon"
+# Build the module against  CPU
+target = "llvm -mcpu=thunderxt88 -mtriple=aarch64-unknown-linux-gnu -mattr=+neon,+crc,+lse,+rdma"
 tvm_targets = tvm.target.create(target)
 cpu_target = "llvm"
 target_host=cpu_target

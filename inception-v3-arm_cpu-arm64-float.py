@@ -56,7 +56,7 @@ mod, params = relay.frontend.from_tflite(tflite_model,
                                          dtype_dict={input_tensor: input_dtype})
 
 # Build the module against to x86 CPU
-target = "llvm -mtriple=aarch64-unknown-linux-gnu -mattr=+neon"
+target = "llvm -device=arm_cpu -mtriple=aarch64-unknown-linux-gnu -mattr=+neon"
 tvm_targets = tvm.target.create(target)
 cpu_target = "llvm"
 target_host=cpu_target

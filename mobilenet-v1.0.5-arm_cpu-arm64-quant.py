@@ -61,7 +61,7 @@ mod, params = relay.frontend.from_tflite(tflite_model,
 #target = "arm_cpu -mtriple=araarch64-linux-gnu -mattr=+neon"
 
 #target = tvm.target.arm_cpu(options="-device=arm_cpu -mtriple=aarch64-linux-gnu -mattr=+neon")
-target = "llvm -device=arm_cpu -mtriple=aarch64-linux-gnu -mattr=+neon"
+target = "llvm -device=arm_cpu -mcpu=thunderxt88 -mtriple=aarch64-unknown-linux-gnu -mattr=+neon,+crc,+lse,+rdma"
 tvm_targets = tvm.target.create(target)
 cpu_target = "llvm"
 target_host=cpu_target

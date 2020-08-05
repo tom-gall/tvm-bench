@@ -17,22 +17,22 @@ def load_test_image(dtype='float32'):
     resized_image = Image.open(image_path).resize((299, 299))
 
     #image_data = np.asarray(resized_image).astype("float32")
-    image_data = np.asarray(resized_image).astype("float32")
+    image_data = np.asarray(resized_image).astype("uint8")
 
     # Add a dimension to the image so that we have NHWC format layout
     image_data = np.expand_dims(image_data, axis=0)
 
     # Preprocess image as described here:
     # https://github.com/tensorflow/models/blob/edb6ed22a801665946c63d650ab9a0b23d98e1b1/research/slim/preprocessing/inception_preprocessing.py#L243
-    image_data[:, :, :, 0] = 2.0 / 255.0 * image_data[:, :, :, 0] - 1
-    image_data[:, :, :, 1] = 2.0 / 255.0 * image_data[:, :, :, 1] - 1
-    image_data[:, :, :, 2] = 2.0 / 255.0 * image_data[:, :, :, 2] - 1
+    #image_data[:, :, :, 0] = 2.0 / 255.0 * image_data[:, :, :, 0] - 1
+    #image_data[:, :, :, 1] = 2.0 / 255.0 * image_data[:, :, :, 1] - 1
+    #image_data[:, :, :, 2] = 2.0 / 255.0 * image_data[:, :, :, 2] - 1
     print('input', image_data.shape)
     return image_data
 
 
-model_dir = './inception_v3_2018_04_27/'
-model_name ='inception_v3.tflite'
+model_dir = './inception_v3_quant/'
+model_name ='inception_v3_quant.tflite'
 tflite_model_file = os.path.join(model_dir, model_name)
 tflite_model_buf = open(tflite_model_file, "rb").read()
 
@@ -48,15 +48,16 @@ image_data = load_test_image()
 
 input_tensor = "input"
 input_shape = (1, 299, 299, 3)
-input_dtype = "float32"
+#input_dtype = "float32"
+input_dtype = "uint8"
 
 # Parse TFLite model and convert it to a Relay module
 mod, params = relay.frontend.from_tflite(tflite_model,
                                          shape_dict={input_tensor: input_shape},
                                          dtype_dict={input_tensor: input_dtype})
 
-# Build the module against to x86 CPU
-target = "llvm -mtriple=aarch64-unknown-linux-gnu -mattr=+neon"
+# Build the module against to ARM CPU
+target = "llvm -device=arm_cpu -mtriple=aarch64-unknown-linux-gnu -mattr=+neon"
 tvm_targets = tvm.target.create(target)
 cpu_target = "llvm"
 target_host=cpu_target
