@@ -12,8 +12,8 @@ from tvm.relay import vm
 from tvm.contrib.download import download_testdata
 from util import load_test_image
 
-model_dir = './inception_v3_2018_04_27/'
-model_name ='inception_v3.tflite'
+model_dir = './squeezenet_2018_04_27/'
+model_name ='squeezenet.tflite'
 tflite_model_file = os.path.join(model_dir, model_name)
 tflite_model_buf = open(tflite_model_file, "rb").read()
 
@@ -26,13 +26,12 @@ except AttributeError:
     tflite_model = tflite.Model.Model.GetRootAsModel(tflite_model_buf, 0)
 
 dtype="float32"
-width=299
-height=299
+width=224
+height=224
 image_data = load_test_image(dtype, width, height)
 
-input_tensor = "input"
-input_shape = (1, 299, 299, 3)
-#input_dtype = "float32"
+input_tensor = "Placeholder"
+input_shape = (1, height, width, 3)
 input_dtype = "float32"
 
 # Parse TFLite model and convert it to a Relay module
@@ -40,8 +39,8 @@ mod, params = relay.frontend.from_tflite(tflite_model,
                                          shape_dict={input_tensor: input_shape},
                                          dtype_dict={input_tensor: input_dtype})
 
-# Build the module for ARM
-target = "llvm -mtriple=armv7a-linux-gnueabihf -mattr=+neon-vfp4,+thumb2"
+# Build the module against to x86 CPU
+target = "llvm -device=arm_cpu -mattr=+neon,+vfp4,+thumb2"
 tvm_targets = tvm.target.create(target)
 cpu_target = "llvm"
 target_host=cpu_target
@@ -67,7 +66,7 @@ module.set_input(**params)
 
 ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
 prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
-print("llvm %-20s %-19s (%s)" % (model_name, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
+print("arm_cpu %-20s %-19s (%s)" % (model_name, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
 
 # Run
 #module.run()

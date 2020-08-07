@@ -12,8 +12,8 @@ from tvm.relay import vm
 from tvm.contrib.download import download_testdata
 from util import load_test_image
 
-model_dir = './inception_v3_2018_04_27/'
-model_name ='inception_v3.tflite'
+model_dir = './inception_v1_224_quant/'
+model_name ='inception_v1_224_quant.tflite'
 tflite_model_file = os.path.join(model_dir, model_name)
 tflite_model_buf = open(tflite_model_file, "rb").read()
 
@@ -25,22 +25,20 @@ except AttributeError:
     import tflite.Model
     tflite_model = tflite.Model.Model.GetRootAsModel(tflite_model_buf, 0)
 
-dtype="float32"
-width=299
-height=299
-image_data = load_test_image(dtype, width, height)
+dtype="uint8"
+image_data = load_test_image(dtype)
 
 input_tensor = "input"
-input_shape = (1, 299, 299, 3)
+input_shape = (1, 224, 224, 3)
 #input_dtype = "float32"
-input_dtype = "float32"
+input_dtype = "uint8"
 
 # Parse TFLite model and convert it to a Relay module
 mod, params = relay.frontend.from_tflite(tflite_model,
                                          shape_dict={input_tensor: input_shape},
                                          dtype_dict={input_tensor: input_dtype})
 
-# Build the module for ARM
+# Build the module against to x86 CPU
 target = "llvm -mtriple=armv7a-linux-gnueabihf -mattr=+neon-vfp4,+thumb2"
 tvm_targets = tvm.target.create(target)
 cpu_target = "llvm"
