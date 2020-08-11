@@ -1,0 +1,13 @@
+
+In regards to the ST image: Colm replied to the Git issue I raised saying he was stumped and not sure how much he'd be able to help as they don't see the same failure in their 32bit environment. 
+
+Vincent is helping me to look into this currently.
+
+In the meantime I've been working on seperating the ArmNN package from the ai package Vincent has made for the stm board in order to deploy it to the IMX8 board.
+
+I'm having some computer issues which i need to resolve first though unfortunately.
+
+
+
+Pavel:
+Pi armnn examples will be updated.
