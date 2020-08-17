@@ -52,10 +52,9 @@ mod, params = relay.frontend.from_tflite(tflite_model,
 #                                relay.transform.ConvertLayout(desired_layouts)])
 #with tvm.transform.PassContext(opt_level=3):
 #    mod = seq(mod)
-
-target = tvm.target.arm_cpu(options="llvm -device=arm_cpu -mtriple=aarch64-unknown-linux-gnu -mattr=+neon")
-
+target = "llvm -device=arm_cpu -mtriple=aarch64-unknown-linux-gnu -mattr=+neon"
 tvm_targets = tvm.target.create(target)
+
 cpu_target = "llvm"
 target_host=cpu_target
 
