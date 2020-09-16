@@ -53,8 +53,12 @@ target_host=cpu_target
 cpudevice = tvm.runtime.cpu()
 ctx = tvm.runtime.context("cpu")
 
-with relay.build_config(opt_level=3):
-    graph, lib, params = relay.build(mod, target, params=params)
+with tvm.transform.PassContext(opt_level=3):
+    graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+
+lib = graph_mod.get_lib()
+params = graph_mod.get_params()
+graph = graph_mod.get_json()
 
 # Create a runtime executor module
 module = graph_runtime.create(graph, lib, tvm.cpu())
@@ -67,5 +71,5 @@ module.set_input(**params)
 
 ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
 prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
-print("%-20s %-19s (%s)" % ("mnasnet_1.3_224.tflite", "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
+print("slow %-20s %-19s (%s)" % ("mnasnet_1.3_224.tflite", "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
 
