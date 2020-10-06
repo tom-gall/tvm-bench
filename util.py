@@ -18,9 +18,11 @@
 
 import numpy as np
 import sys
+import tvm
 from tvm import relay
 from tvm.relay import testing
 from tvm.contrib.download import download_testdata
+from tvm.relay.op.contrib import arm_compute_lib
 from PIL import Image
 
 def extract(path):
@@ -120,3 +122,60 @@ def print_progress(msg):
     """
     sys.stdout.write(msg + "\r")
     sys.stdout.flush()
+
+# Experimental scaffolding code for using ACL
+def build_module(mod, target, params=None, enable_acl=True, tvm_ops=0, acl_partitions=1):
+    """Build module with option to build for ACL."""
+    if isinstance(mod, tvm.relay.expr.Call):
+        mod = tvm.IRModule.from_expr(mod)
+    with tvm.transform.PassContext(opt_level=3, disabled_pass=["AlterOpLayout"]):
+        if enable_acl:
+            mod = arm_compute_lib.partition_for_arm_compute_lib(mod, params)
+            tvm_op_count = get_cpu_op_count(mod)
+            assert tvm_op_count == tvm_ops, "Got {} TVM operators, expected {}".format(
+                tvm_op_count, tvm_ops
+            )
+            partition_count = 0
+            for global_var in mod.get_global_vars():
+                if "arm_compute_lib" in global_var.name_hint:
+                    partition_count += 1
+
+            assert (
+                acl_partitions == partition_count
+            ), "Got {} Arm Compute Library partitions, expected {}".format(
+                partition_count, acl_partitions
+            )
+        relay.backend.compile_engine.get().clear()
+        return relay.build(mod, target=target, params=params)
+
+
+def update_lib(lib, device, cross_compile):
+    """Export the library to the remote/local device."""
+    lib_name = "mod.so"
+    temp = util.tempdir()
+    lib_path = temp.relpath(lib_name)
+    if cross_compile:
+        lib.export_library(lib_path, cc=cross_compile)
+    else:
+        lib.export_library(lib_path)
+    device.upload(lib_path)
+    lib = device.load_module(lib_name)
+    return lib
+
+def get_cpu_op_count(mod):
+    """Traverse graph counting ops offloaded to TVM."""
+
+    class Counter(tvm.relay.ExprVisitor):
+        def __init__(self):
+            super().__init__()
+            self.count = 0
+
+        def visit_call(self, call):
+            if isinstance(call.op, tvm.ir.Op):
+                self.count += 1
+
+            super().visit_call(call)
+
+    c = Counter()
+    c.visit(mod["main"])
+    return c.count
