@@ -16,8 +16,9 @@
 # under the License.
 """Utility for benchmark"""
 
+import os
 import numpy as np
-import sys
+import sys, getopt
 import tvm
 from tvm import relay
 from tvm.relay import testing
@@ -26,7 +27,22 @@ from tvm.relay.op.contrib import arm_compute_lib
 from PIL import Image
 from tvm.contrib.download import download_testdata
 
-def download_model_zoo(model_dir, model, url='http://people.linaro.org/~tom.gall/model_zoo/'):
+def parse_options(argv):
+    device='llvm'
+    try:
+        opts, args = getopt.getopt(argv, "hd:")
+    except getopt.GetoptError:
+        print('python3 blahblah.py -d <llvm|arm_cpu>')
+        sys.exit()
+    for opt,arg in opts:
+        if opt == '-h':
+            print('python3 blahblah.py -c <llvm|arm_cpu>')
+            sys.exit()
+        elif opt == '-d':
+            device=arg
+    return device
+
+def download_model_zoo(model_dir, model_name, url='http://people.linaro.org/~tom.gall/model_zoo/'):
     model_url = url + model_dir + model_name
     model_path = download_testdata(model_url, model_name, module=["tf", "official"])
     model_dir = os.path.dirname(model_path)
