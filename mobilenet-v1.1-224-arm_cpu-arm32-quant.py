@@ -17,9 +17,9 @@ model_url = "http://download.tensorflow.org/models/mobilenet_v1_2018_08_02/mobil
 # Download model tar file and extract it to get mobilenet_v1_1.0_224.tflite
 #model_path = download_testdata(model_url, "mobilenet_v1_1.0_224.tgz", module=['tf', 'official'])
 #model_dir = os.path.dirname(model_path)
-model_dir = './mobilenet-v1.1.0-128quant/'
+model_dir = './mobilenet_v1_1.0_224_quant/'
 #extract(model_path)
-model_name ='mobilenet_v1_1.0_128_quant.tflite'
+model_name ='mobilenet_v1_1.0_224_quant.tflite'
 # Now we can open mobilenet_v1_1.0_224.tflite
 #tflite_model_file = os.path.join(model_dir, "mobilenet_v1_1.0_224.tflite")
 tflite_model_file = os.path.join(model_dir, model_name)
@@ -38,8 +38,7 @@ image_data = load_test_image(dtype)
 
 input_tensor = "input"
 input_shape = (1, 224, 224, 3)
-#input_dtype = "float32"
-input_dtype = "int8"
+input_dtype = "uint8"
 
 # Parse TFLite model and convert it to a Relay module
 mod, params = relay.frontend.from_tflite(tflite_model,
