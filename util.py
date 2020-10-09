@@ -24,6 +24,14 @@ from tvm.relay import testing
 from tvm.contrib.download import download_testdata
 from tvm.relay.op.contrib import arm_compute_lib
 from PIL import Image
+from tvm.contrib.download import download_testdata
+
+def download_model_zoo(model_dir, model, url='http://people.linaro.org/~tom.gall/model_zoo/'):
+    model_url = url + model_dir + model_name
+    model_path = download_testdata(model_url, model_name, module=["tf", "official"])
+    model_dir = os.path.dirname(model_path)
+    return model_dir
+   
 
 def extract(path):
     import tarfile
