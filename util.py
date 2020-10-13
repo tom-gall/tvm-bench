@@ -23,7 +23,7 @@ import tvm
 from tvm import relay
 from tvm.relay import testing
 from tvm.contrib.download import download_testdata
-#from tvm.relay.op.contrib import arm_compute_lib
+from tvm.relay.op.contrib import arm_compute_lib
 from PIL import Image
 from tvm.contrib.download import download_testdata
 import cpuinfo
