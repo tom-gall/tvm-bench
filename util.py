@@ -23,9 +23,10 @@ import tvm
 from tvm import relay
 from tvm.relay import testing
 from tvm.contrib.download import download_testdata
-from tvm.relay.op.contrib import arm_compute_lib
+#from tvm.relay.op.contrib import arm_compute_lib
 from PIL import Image
 from tvm.contrib.download import download_testdata
+import cpuinfo
 
 def parse_options(argv):
     device='llvm'
@@ -41,6 +42,33 @@ def parse_options(argv):
         elif opt == '-d':
             device=arg
     return device
+
+
+def get_device_arch():
+    arch = cpuinfo.get_cpu_info()['arch_string_raw']
+    print(arch)
+    print("was the aarch")
+    if arch == "aarch64":
+        return "aarch64-unknown-linux-gnu"
+    if arch == "armv7a":
+        return "armv7a-linux-gnueabihf"
+    else:
+        return ''
+
+def get_device_attributes():
+    if get_device_arch() == "aarch64-unknown-linux-gnu":
+        return attributes = ['+neon','+vfp4','+thumb2']
+    if get_device_arch() == "armv7a-linux-gnueabihf":
+        return attributes = ['+neon']
+    else:
+        return attributes = ['']
+
+def get_device_type():
+    brand=cpuinfo.get_cpu_info()['brand_raw']
+    if brand == 'ThunderX 88XX':
+        return mcpu='thunderxt88'
+    else:
+        return mcpu=''
 
 def download_model_zoo(model_dir, model_name, url='http://people.linaro.org/~tom.gall/model_zoo/'):
     model_url = url + model_dir + model_name
