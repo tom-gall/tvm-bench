@@ -52,7 +52,7 @@ def get_device_attributes():
     if get_device_arch() == "aarch64":
         return attributes = ['+neon']
     if get_device_arch() == "armv7l":
-        return attributes = ['+neon,+vfp4,+thumb2']
+        return attributes = ['+neon,+vfp4']
     else:
         return attributes = ['']
 
