@@ -46,20 +46,13 @@ def parse_options(argv):
 
 def get_device_arch():
     arch = cpuinfo.get_cpu_info()['arch_string_raw']
-    print(arch)
-    print("was the aarch")
-    if arch == "aarch64":
-        return "aarch64-unknown-linux-gnu"
-    if arch == "armv7a":
-        return "armv7a-linux-gnueabihf"
-    else:
-        return ''
+    return arch
 
 def get_device_attributes():
-    if get_device_arch() == "aarch64-unknown-linux-gnu":
-        return attributes = ['+neon','+vfp4','+thumb2']
-    if get_device_arch() == "armv7a-linux-gnueabihf":
+    if get_device_arch() == "aarch64":
         return attributes = ['+neon']
+    if get_device_arch() == "armv7l":
+        return attributes = ['+neon,+vfp4,+thumb2']
     else:
         return attributes = ['']
 
@@ -69,6 +62,17 @@ def get_device_type():
         return mcpu='thunderxt88'
     else:
         return mcpu=''
+
+def get_tvm_target(device, dev_type, arch_token, attributes):
+    if arch_token == "aarch64":
+        arch_token = 'aarch64-unknown-linux-gnu'
+    if arch_token == "armv7a" or arch_token == "armv7l":
+        arch_token = "armv7a-linux-gnueabihf"
+    if device in ("llvm"):
+        target_string = "llvm -mcpu=" + dev_type + " -mtriple=" + aarch_token + " -mattr=" + attributes
+    else:
+        target_string = "llvm -device=arm_cpu" + " -mcpu=" + dev_type + " -mtriple=" + aarch_token + " -mattr=" + attributes
+    return target_string
 
 def download_model_zoo(model_dir, model_name, url='http://people.linaro.org/~tom.gall/model_zoo/'):
     model_url = url + model_dir + model_name
