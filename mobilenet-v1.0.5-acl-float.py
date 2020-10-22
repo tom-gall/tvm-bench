@@ -64,7 +64,7 @@ atol=0.002
 rtol=0.01
 
 try:
-    lib = build_module(mod, target, params, enable_acl, tvm_ops, acl_partitions)
+    lib = build_module(mod, tvm_target, params, enable_acl, tvm_ops, acl_partitions)
 except Exception as e:
     err_msg = "The module could not be built.\n"
     #if config:
