@@ -47,6 +47,10 @@ input_dtype = dtype
 mod, params = relay.frontend.from_tflite(tflite_model,
                                          shape_dict={input_tensor: input_shape},
                                          dtype_dict={input_tensor: input_dtype})
+desired_layouts = {'nn.conv2d': ['NCHW', 'default']}
+seq = tvm.transform.Sequential([relay.transform.RemoveUnusedFunctions(),relay.transform.ConvertLayout(desired_layouts)])
+with tvm.transform.PassContext(opt_level=3):
+    mod = seq(mod)
 
 tvm_target = get_tvm_target(device, get_device_type(), get_device_arch(), get_device_attributes())
 
@@ -58,8 +62,8 @@ cpudevice = tvm.runtime.cpu()
 ctx = tvm.runtime.context("cpu")
 
 enable_acl=True
-tvm_ops=55
-acl_partitions=16
+tvm_ops=172
+acl_partitions=0
 atol=0.002
 rtol=0.01
 
