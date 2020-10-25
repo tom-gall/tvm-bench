@@ -76,6 +76,6 @@ module.set_input(**params)
 
 ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
 prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
-print("%-20s %-7d %-19s (%s)" % (model_name,device, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
+print("%-20s %-7s %-19s (%s)" % (model_name,device, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
 print(tvm_target)
 
