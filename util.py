@@ -59,12 +59,18 @@ def get_device_attributes():
         return  ''
 
 def get_device_type():
-    brand=cpuinfo.get_cpu_info()['brand_raw']
-    print(brand)
+    cpudictionary=cpuinfo.get_cpu_info()
+    brand=cpudictionary.get('brand_raw')
     if brand == 'ThunderX 88XX':
         return 'thunderxt88'
     elif brand == 'ARMv7 Processor rev 5 (v7l)':
         return 'cortex-a7'
+    elif brand is None:
+        brand=cpudictionary.get('vendor_id_raw')
+        if brand =='Qualcomm' :
+            return 'cortex-a75'
+        else:
+            return ' '
     else:
         return ' '
 
