@@ -52,6 +52,8 @@ def get_device_attributes():
     if get_device_arch() == "aarch64":
         if get_device_type() == 'thunderxt88':
             return '+neon,+crc,+lse'
+        elif get_device_type() == 'cortex-a78':
+            return '+neon,+crc'
         return '+neon'
     if get_device_arch() == "armv7l":
         return  '+neon,+vfp4'
@@ -61,6 +63,7 @@ def get_device_attributes():
 def get_device_type():
     cpudictionary=cpuinfo.get_cpu_info()
     brand=cpudictionary.get('brand_raw')
+    cpuversion=cpudictionary.get('cpuinfo_version_string')
     if brand == 'ThunderX 88XX':
         return 'thunderxt88'
     elif brand == 'ARMv7 Processor rev 5 (v7l)':
@@ -69,6 +72,8 @@ def get_device_type():
         brand=cpudictionary.get('vendor_id_raw')
         if brand =='Qualcomm' :
             return 'cortex-a75'
+        elif cpuversion =='7.0.0':
+            return 'cortex-a78'
         else:
             return ' '
     else:
