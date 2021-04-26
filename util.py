@@ -27,6 +27,7 @@ from tvm.relay.op.contrib import arm_compute_lib
 from PIL import Image
 from tvm.contrib.download import download_testdata
 import cpuinfo
+import multiprocessing
 
 def parse_options(argv):
     device='llvm'
@@ -47,6 +48,10 @@ def parse_options(argv):
 def get_device_arch():
     arch = cpuinfo.get_cpu_info()['arch_string_raw']
     return arch
+
+def get_cpu_count():
+    cpu_count = multiprocessing.cpu_count()
+    return cpu_count
 
 def get_device_attributes():
     if get_device_arch() == "aarch64":
