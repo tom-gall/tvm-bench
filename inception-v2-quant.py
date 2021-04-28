@@ -3,7 +3,7 @@ import numpy as np
 import tvm
 from PIL import Image
 from tvm import te
-from tvm.contrib import graph_runtime
+from tvm.contrib import graph_executor
 from tvm import relay
 from tvm.runtime import container
 from tvm.runtime import vm as vm_rt
@@ -56,7 +56,6 @@ cpu_target = "llvm"
 target_host=cpu_target
 
 cpudevice = tvm.runtime.cpu()
-ctx = tvm.runtime.context("cpu")
 
 with tvm.transform.PassContext(opt_level=3):
     graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
@@ -66,7 +65,7 @@ params = graph_mod.get_params()
 graph = graph_mod.get_json()
 
 # Create a runtime executor module
-module = graph_runtime.create(graph, lib, tvm.cpu())
+module = graph_executor.create(graph, lib, tvm.cpu())
 
 # Feed input data
 module.set_input(input_tensor, tvm.nd.array(image_data))
@@ -74,7 +73,7 @@ module.set_input(input_tensor, tvm.nd.array(image_data))
 # Feed related params
 module.set_input(**params)
 
-ftimer = module.module.time_evaluator("run", ctx, number=1, repeat=10)
+ftimer = module.module.time_evaluator("run", cpudevice, number=1, repeat=10)
 prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
 print("%-20s %-7s %-19s (%s)" % (model_name, device, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
 print(tvm_target)

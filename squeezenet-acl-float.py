@@ -3,7 +3,7 @@ import numpy as np
 import tvm
 from PIL import Image
 from tvm import te
-from tvm.contrib import graph_runtime
+from tvm.contrib import graph_executor
 from tvm import relay
 from tvm.runtime import container
 from tvm.runtime import vm as vm_rt
@@ -58,11 +58,10 @@ cpu_target = "llvm"
 target_host=cpu_target
 
 cpudevice = tvm.runtime.cpu()
-ctx = tvm.runtime.context("cpu")
 
 enable_acl=True
-tvm_ops=171
-acl_partitions=1
+tvm_ops=145
+acl_partitions=27
 atol=0.002
 rtol=0.01
 
@@ -73,12 +72,11 @@ except Exception as e:
     err_msg += str(e)
     raise Exception(err_msg)
 
-gen_module = graph_runtime.GraphModule(lib["default"](cpudevice))
+gen_module = graph_executor.GraphModule(lib["default"](cpudevice))
 gen_module.set_input(input_tensor, tvm.nd.array(image_data))
-#gen_module.run()
 
 
-ftimer = gen_module.module.time_evaluator("run", ctx, number=1, repeat=10)
+ftimer = gen_module.module.time_evaluator("run", cpudevice, number=1, repeat=10)
 prof_res = np.array(ftimer().results) * 1000  # multiply 1000 for converting to millisecond
 print("acl %-20s %-7s %-19s (%s)" % (model_name, device, "%.2f ms" % np.mean(prof_res), "%.2f ms" % np.std(prof_res)))
 print(tvm_target)
