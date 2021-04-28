@@ -37,7 +37,7 @@ def parse_options(argv):
         sys.exit()
     for opt,arg in opts:
         if opt == '-h':
-            print('python3 blahblah.py -c <llvm|arm_cpu>')
+            print('python3 blahblah.py -d <llvm|arm_cpu>')
             sys.exit()
         elif opt == '-d':
             device=arg
@@ -46,6 +46,7 @@ def parse_options(argv):
 
 def get_device_arch():
     arch = cpuinfo.get_cpu_info()['arch_string_raw']
+    foo = cpuinfo.get_cpu_info()
     return arch
 
 def get_device_attributes():
@@ -72,10 +73,12 @@ def get_device_type():
         brand=cpudictionary.get('vendor_id_raw')
         if brand =='Qualcomm' :
             return 'cortex-a75'
-        elif cpuversion =='7.0.0':
-            return 'cortex-a78'
+        elif brand == 'ARM':
+            return 'native'
+        #elif cpuversion =='7.0.0':
+        #    return 'cortex-a78'
         else:
-            return ' '
+            return 'native'
     else:
         return ' '
 
