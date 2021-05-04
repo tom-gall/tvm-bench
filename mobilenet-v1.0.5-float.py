@@ -2,7 +2,7 @@ import os
 import numpy as np
 import tvm
 from PIL import Image
-from tvm import te
+from tvm import te,autotvm
 from tvm.contrib import graph_executor
 from tvm import relay
 from tvm.runtime import container
@@ -10,12 +10,12 @@ from tvm.runtime import vm as vm_rt
 from tvm.relay import testing
 from tvm.relay import vm
 from tvm.contrib.download import download_testdata
-from util import load_test_image,download_model_zoo,parse_options, get_device_arch, get_device_attributes, get_device_type, get_tvm_target
+from util import load_test_image,download_model_zoo,parse_options, get_device_arch, get_device_attributes, get_device_type, get_tvm_target, parse_cmd_options
 import sys
 
 argv=sys.argv[1:]
 
-device = parse_options(argv)
+device, logfile  = parse_cmd_options(argv)
 
 model_dir ="/mobilenet_v1_0.5_128/"
 model_name ="mobilenet_v1_0.5_128.tflite"
@@ -60,8 +60,9 @@ target_host=cpu_target
 
 cpudevice = tvm.runtime.cpu()
 
-with tvm.transform.PassContext(opt_level=3):
-    graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+with autotvm.apply_history_best(logfile):
+    with tvm.transform.PassContext(opt_level=3):
+        graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
 
 lib = graph_mod.get_lib()
 params = graph_mod.get_params()
