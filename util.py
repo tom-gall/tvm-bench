@@ -29,10 +29,12 @@ from tvm.contrib.download import download_testdata
 import cpuinfo
 import multiprocessing
 
-def parse_options(argv):
+def parse_cmd_options(argv):
     device='llvm'
+    logfile=None
+
     try:
-        opts, args = getopt.getopt(argv, "hd:")
+        opts, args = getopt.getopt(argv, "hd:l:")
     except getopt.GetoptError:
         print('python3 blahblah.py -d <llvm|arm_cpu>')
         sys.exit()
@@ -42,6 +44,27 @@ def parse_options(argv):
             sys.exit()
         elif opt == '-d':
             device=arg
+        elif opt == '-l':
+            logfile=arg
+    return device, logfile
+
+def parse_options(argv):
+    device='llvm'
+    logfile=None
+
+    try:
+        opts, args = getopt.getopt(argv, "hd:l:")
+    except getopt.GetoptError:
+        print('python3 blahblah.py -d <llvm|arm_cpu>')
+        sys.exit()
+    for opt,arg in opts:
+        if opt == '-h':
+            print('python3 blahblah.py -d <llvm|arm_cpu>')
+            sys.exit()
+        elif opt == '-d':
+            device=arg
+        elif opt == '-l':
+            logfile=arg
     return device
 
 
