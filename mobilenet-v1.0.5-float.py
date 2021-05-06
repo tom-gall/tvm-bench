@@ -60,7 +60,11 @@ target_host=cpu_target
 
 cpudevice = tvm.runtime.cpu()
 
-with autotvm.apply_history_best(logfile):
+if logfile is not None: 
+    with autotvm.apply_history_best(logfile):
+        with tvm.transform.PassContext(opt_level=3):
+            graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+else:
     with tvm.transform.PassContext(opt_level=3):
         graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
 
