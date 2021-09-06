@@ -3,7 +3,7 @@ import numpy as np
 import tvm
 from PIL import Image
 from tvm import te
-from tvm.contrib import graph_runtime
+from tvm.contrib import graph_executor
 from tvm import relay
 from tvm.runtime import container
 from tvm.runtime import vm as vm_rt
@@ -62,10 +62,9 @@ with tvm.transform.PassContext(opt_level=3):
 
 lib = graph_mod.get_lib()
 params = graph_mod.get_params()
-graph = graph_mod.get_json()
 
 # Create a runtime executor module
-module = graph_runtime.create(graph, lib, tvm.cpu())
+module = graph_executor.GraphModule(graph_mod["default"](cpudevice))
 
 # Feed input data
 module.set_input(input_tensor, tvm.nd.array(image_data))

@@ -63,12 +63,10 @@ cpudevice = tvm.runtime.cpu()
 with tvm.transform.PassContext(opt_level=3):
     graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
 
-lib = graph_mod.get_lib()
 params = graph_mod.get_params()
-graph = graph_mod.get_json()
 
 # Create a runtime executor module
-module = graph_executor.create(graph, lib, tvm.cpu())
+module = graph_executor.GraphModule(graph_mod["default"](cpudevice))
 
 # Feed input data
 module.set_input(input_tensor, tvm.nd.array(image_data))
