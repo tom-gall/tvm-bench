@@ -79,10 +79,9 @@ else:
 
 lib = graph_mod.get_lib()
 params = graph_mod.get_params()
-graph = graph_mod.get_json()
 
 # Create the executor and set the parameters and inputs
-module = graph_executor.create(graph, lib, tvm.cpu())
+module = graph_executor.GraphModule(graph_mod["default"](cpudevice))
 # Feeding input data
 module.set_input(input_ids=inputs, input_mask=token_types, segment_ids=valid_length)
 module.set_input(**params)
