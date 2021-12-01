@@ -54,14 +54,13 @@ if device=="llvm":
 
 tvm_target = get_tvm_target(device, get_device_type(), get_device_arch(), get_device_attributes())
 
-tvm_targets = tvm.target.Target(tvm_target)
 cpu_target = "llvm"
-target_host=cpu_target
+tvm_targets = tvm.target.Target(tvm_target, host=cpu_target)
 
 cpudevice = tvm.runtime.cpu()
 
 with tvm.transform.PassContext(opt_level=3):
-    graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+    graph_mod = relay.build(mod, tvm_targets, params=params)
 
 params = graph_mod.get_params()
 
