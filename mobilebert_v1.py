@@ -63,19 +63,18 @@ dtype_dict = {input_tensors[0]: input_dtype, input_tensors[1]: input_dtype, inpu
 mod, params = relay.frontend.from_tflite(tflite_model, shape_dict)
 tvm_target = get_tvm_target(device, get_device_type(), get_device_arch(), get_device_attributes())
 
-tvm_targets = tvm.target.Target(tvm_target)
 cpu_target = "llvm"
-target_host = cpu_target
+tvm_targets = tvm.target.Target(tvm_target, host=cpu_target)
 
 cpudevice = tvm.runtime.cpu()
 
 if logfile is not None:
     with autotvm.apply_history_best(logfile):
         with tvm.transform.PassContext(opt_level=3, required_pass=["FastMath"]):
-            graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+            graph_mod = relay.build(mod, tvm_targets, params=params)
 else:
     with tvm.transform.PassContext(opt_level=3, required_pass=["FastMath"]):
-        graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+        graph_mod = relay.build(mod, tvm_targets, params=params)
 
 lib = graph_mod.get_lib()
 params = graph_mod.get_params()
