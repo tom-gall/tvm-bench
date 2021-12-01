@@ -52,26 +52,24 @@ with tvm.transform.PassContext(opt_level=3):
 
 tvm_target = get_tvm_target(device, get_device_type(), get_device_arch(), get_device_attributes())
 
-tvm_targets = tvm.target.Target(tvm_target)
 cpu_target = "llvm"
-target_host=cpu_target
+tvm_targets = tvm.target.Target(tvm_target, host=cpu_target)
 
 cpudevice = tvm.runtime.cpu()
 
 if logfile is not None:
     with autotvm.apply_history_best(logfile):
         with tvm.transform.PassContext(opt_level=3):
-            graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+            graph_mod = relay.build(mod, tvm_targets, params=params)
 else:
     with tvm.transform.PassContext(opt_level=3):
-        graph_mod = relay.build(mod, tvm_targets, params=params,target_host=target_host)
+        graph_mod = relay.build(mod, tvm_targets, params=params)
 
 lib = graph_mod.get_lib()
 params = graph_mod.get_params()
-graph = graph_mod.get_json()
 
 # Create a runtime executor module
-module = graph_executor.create(graph, lib, tvm.cpu())
+module = graph_executor.GraphModule(graph_mod["default"](cpudevice))
 
 # Feed input data
 module.set_input(input_tensor, tvm.nd.array(image_data))
